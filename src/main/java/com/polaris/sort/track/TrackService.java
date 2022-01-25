@@ -17,9 +17,7 @@ public class TrackService {
 
     private final List<Tracker> tracks = new ArrayList<>();
 
-    private long nextId = 0;
-
-    private long frameCount = 0;
+    private int nextId = 0;
 
     /**
      * 预测跟踪器位置
@@ -46,7 +44,8 @@ public class TrackService {
         }
         for (int index : unassignedDetections) {
             Location location = dets.get(index);
-            Tracker tracker = new Tracker(nextId++, location);
+            nextId = (nextId + 1) % 1000;
+            Tracker tracker = new Tracker(nextId, location);
             tracks.add(tracker);
         }
     }
@@ -70,13 +69,11 @@ public class TrackService {
         }
     }
 
-    public List<Tracker> deleteLostTracks(int minHits, int maxAge) {
+    public List<Tracker> deleteLostTracks(int minHits, int maxAge, long frameCount) {
         if (tracks.isEmpty()) {
             return Collections.emptyList();
         }
-        List<Tracker> res = tracks.stream().filter(tracker -> {
-            return tracker.getTimeSinceUpdate() < 1 && (tracker.getHitStreak() >= minHits || frameCount < minHits);
-        }).collect(Collectors.toList());
+        List<Tracker> res = tracks.stream().filter(tracker -> tracker.getTimeSinceUpdate() < 1 && (tracker.getHitStreak() >= minHits || frameCount < minHits)).collect(Collectors.toList());
         // 删除过期的跟踪器
         tracks.removeIf(track -> track.getTimeSinceUpdate() > maxAge);
         return res;

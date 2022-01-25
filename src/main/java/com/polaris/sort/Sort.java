@@ -37,7 +37,7 @@ public class Sort {
     /**
      * 帧计数
      */
-    private long frameCount;
+    private long frameCount = 0;
 
     private final TrackService trackService = new TrackService();
 
@@ -48,7 +48,7 @@ public class Sort {
      * @return 跟踪结果
      */
     public List<TrackResult> update(List<Location> dets) {
-        frameCount++;
+        frameCount = (frameCount + 1) % Long.MAX_VALUE;
         // get predicted locations from existing trackers.
         List<Location> predictLocations = trackService.predictNewLocationsOfTracks();
         // 匈牙利匹配算法进行匹配
@@ -60,7 +60,7 @@ public class Sort {
         // 创建新轨迹
         trackService.createNewTracks(assignResult.getUnassignedDetections(), dets);
         // 删除丢掉的轨迹
-        List<Tracker> trackers = trackService.deleteLostTracks(minHits, maxAge);
+        List<Tracker> trackers = trackService.deleteLostTracks(minHits, maxAge, frameCount);
         return trackers.stream().map(tracker -> {
             TrackResult trackResult = new TrackResult();
             trackResult.setId(tracker.getId());
